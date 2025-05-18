@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Оплата через TON</title>
+    <title>11132Оплата через TON</title>
     <!-- Підключення TonConnect UI -->
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <!-- Підключення зовнішнього CSS -->
@@ -36,7 +36,7 @@
 
     <script>
       const API_KEY = "d3f661b9dcdcc932fb7f369f29f863e8456bacf6cb34bef2ffcc4e8d2ee9439a";
-      const TON_MASTER = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c";
+      const TON_MASTER  = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c";
       const USDT_MASTER = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
 
       const tonConnect = new TON_CONNECT_UI.TonConnectUI({
@@ -45,18 +45,24 @@
       });
 
       const infoBlock = document.getElementById("wallet-info");
-      const addrElem = document.getElementById("wallet-address");
-      const tonElem = document.getElementById("ton-balance");
-      const usdtElem = document.getElementById("usdt-balance");
-      const payBtn = document.getElementById("pay-button");
-      const errElem = document.getElementById("error");
+      const addrElem  = document.getElementById("wallet-address");
+      const tonElem   = document.getElementById("ton-balance");
+      const usdtElem  = document.getElementById("usdt-balance");
+      const payBtn    = document.getElementById("pay-button");
+      const errElem   = document.getElementById("error");
 
-      async function fetchTonBalance(address) {
-        const res = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${address}&api_key=${API_KEY}`);
-        const json = await res.json();
-        if (!json.ok) throw new Error(json.error?.message || "getAddressBalance failed");
-        return BigInt(json.result) / 10n ** 9n;
-      }
+
+async function fetchTonBalance(address) {
+  const res = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${address}&api_key=${API_KEY}`);
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error?.message || "getAddressBalance failed");
+  
+  // Конвертируем в число TON (number), не BigInt
+  const balanceTon = Number(json.result) / 10**9;
+  return balanceTon.toFixed(3);
+}
+
+
 
       async function fetchJettonBalance(address, jetton_master) {
         const res = await fetch("https://toncenter.com/api/v3/getAccountJettonBalance", {
@@ -111,6 +117,8 @@
     </script>
   </body>
 </html>
+
+
 
 
 
