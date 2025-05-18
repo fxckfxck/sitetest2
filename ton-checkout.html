@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>132Оплата через TON</title>
+    <title>11132Оплата через TON</title>
     <!-- Підключення TonConnect UI -->
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <!-- Підключення зовнішнього CSS -->
@@ -59,7 +59,7 @@ async function fetchTonBalance(address) {
   
   // Конвертируем в число TON (number), не BigInt
   const balanceTon = Number(json.result) / 10**9;
-  return balanceTon;
+  return balanceTon.toFixed(2);
 }
 
 
