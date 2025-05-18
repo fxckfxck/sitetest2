@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Оплата через TON</title>
-    <!-- TonConnect UI -->
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
       * { box-sizing: border-box; }
@@ -31,18 +30,15 @@
         font-size: 1.2em;
         margin: 16px 0;
       }
-      /* Обёртка для кнопки TonConnect */
       .connect-wrapper {
         display: flex;
         justify-content: center;
         margin: 20px 0;
       }
-      /* Стили для встроенной кнопки TonConnect */
       #connect-button .ton-connect-button {
         width: 100%;
         max-width: 280px;
       }
-      /* Собственные кнопки */
       .ton-button {
         display: block;
         width: 100%;
@@ -92,17 +88,21 @@
     </div>
 
     <script>
-      // Инициализируем TonConnect
+      // Подставляем реальные адреса контрактов
+      const TON_CONTRACT   = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c";
+      const USDT_CONTRACT  = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
+
+      // Инициализация TonConnect
       const tonConnect = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: "https://fxckfxck.github.io/sitetest2/tonconnect-manifest.json",
         buttonRootId: "connect-button",
       });
 
-      const walletInfo    = document.getElementById("wallet-info");
-      const addrElem      = document.getElementById("wallet-address");
-      const tonElem       = document.getElementById("ton-balance");
-      const usdtElem      = document.getElementById("usdt-balance");
-      const payButton     = document.getElementById("pay-button");
+      const walletInfo = document.getElementById("wallet-info");
+      const addrElem   = document.getElementById("wallet-address");
+      const tonElem    = document.getElementById("ton-balance");
+      const usdtElem   = document.getElementById("usdt-balance");
+      const payButton  = document.getElementById("pay-button");
 
       // Обновляем UI после подключения
       async function updateWalletInfo() {
@@ -113,7 +113,7 @@
         payButton.classList.remove("hidden");
         addrElem.textContent = wallet.account.address;
 
-        // Получаем баланс TON (нанотоны → TON)
+        // Баланс TON
         try {
           const nano = await tonConnect.provider.getBalance();
           const ton  = (BigInt(nano) / 10n**9n).toString();
@@ -122,29 +122,28 @@
           tonElem.textContent = "Н/Д";
         }
 
-        // Пример получения Jetton-баланса USDT
+        // Баланс USDT (Jetton)
         try {
-          // Замените на реальный адрес вашего Jetton-контракта USDT
-          const USDT_CONTRACT = "EQC...Ваш_USDT_Контракт...";
+          // getJettonBalance возвращает строку в нанотонах токена
           const raw = await tonConnect.provider.getJettonBalance(USDT_CONTRACT);
-          const decimals = 9; // обычно 9
-          const display = (BigInt(raw)/10n**BigInt(decimals)).toString();
+          // Обычно USDT имеет 9 знаков после запятой
+          const display = (BigInt(raw) / 10n**9n).toString();
           usdtElem.textContent = `${display} USDT`;
         } catch {
           usdtElem.textContent = "Н/Д";
         }
       }
 
-      // Слушаем изменение статуса (подключён/отключён)
+      // Слушаем изменения статуса соединения
       tonConnect.onStatusChange(() => updateWalletInfo());
 
-      // Обработчик оплаты
+      // Обработчик кнопки "Оплатити"
       payButton.addEventListener("click", async () => {
         try {
           await tonConnect.sendTransaction({
-            validUntil: Math.floor(Date.now()/1000)+60,
+            validUntil: Math.floor(Date.now()/1000) + 60,
             messages: [{
-              address: "UQDPFf6Y-HI_n0l5JhlKaA3McTgmx0LeeYhb4KC1pQUnE1cc",
+              address: TON_CONTRACT,
               amount: "10000000", // 0.01 TON
             }],
           });
@@ -157,4 +156,5 @@
     </script>
   </body>
 </html>
+
 
