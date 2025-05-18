@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>12Оплата через TON</title>
+    <title>132Оплата через TON</title>
     <!-- Підключення TonConnect UI -->
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <!-- Підключення зовнішнього CSS -->
@@ -51,7 +51,7 @@
       const payBtn    = document.getElementById("pay-button");
       const errElem   = document.getElementById("error");
 
-  async function fetchTonBalance(address) {
+
 async function fetchTonBalance(address) {
   const res = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${address}&api_key=${API_KEY}`);
   const json = await res.json();
