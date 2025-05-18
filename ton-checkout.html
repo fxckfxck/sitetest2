@@ -59,7 +59,7 @@ async function fetchTonBalance(address) {
   
   // Конвертируем в число TON (number), не BigInt
   const balanceTon = Number(json.result) / 10**9;
-  return balanceTon.toFixed(2);
+  return balanceTon.toFixed(3);
 }
 
 
