@@ -1,160 +1,196 @@
 <!DOCTYPE html>
 <html lang="uk">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>О123плата через TON</title>
-    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-    <style>
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f4f9fc;
-        color: #333;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-      }
-      .payment-container {
-        width: 360px;
-        background: #fff;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        text-align: center;
-      }
-      h1 { margin-top: 0; }
-      .amount {
-        font-size: 1.2em;
-        margin: 16px 0;
-      }
-      .connect-wrapper {
-        display: flex;
-        justify-content: center;
-        margin: 20px 0;
-      }
-      #connect-button .ton-connect-button {
-        width: 100%;
-        max-width: 280px;
-      }
-      .ton-button {
-        display: block;
-        width: 100%;
-        max-width: 280px;
-        margin: 12px auto;
-        padding: 12px;
-        font-size: 1em;
-        color: #fff;
-        background: #0098ea;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: background .3s;
-      }
-      .ton-button:hover { background: #007ac2; }
-      .wallet-info {
-        text-align: left;
-        margin-top: 20px;
-        word-break: break-all;
-      }
-      .wallet-info p { margin: 8px 0 4px; }
-      .wallet-info span { display: block; font-family: monospace; }
-      .hidden { display: none; }
-    </style>
-  </head>
-  <body>
-    <div class="payment-container">
-      <h1>💳 Оплатити онлайн замовлення</h1>
-      <p class="amount">Сума до сплати: <strong>₴100.00</strong></p>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>1Оплата через TON</title>
+  <!-- TonConnect UI -->
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f9fc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .payment-container {
+      width: 360px;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h1 { margin: 0 0 16px; }
+    .amount {
+      font-size: 1.2em;
+      margin-bottom: 20px;
+    }
+    .connect-wrapper {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    /* Встроенная кнопка TonConnect */
+    #connect-button .ton-connect-button {
+      width: 100%;
+      max-width: 280px;
+    }
+    .ton-button {
+      display: block;
+      width: 100%;
+      max-width: 280px;
+      margin: 12px auto;
+      padding: 12px;
+      font-size: 1em;
+      color: #fff;
+      background: #0098ea;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .3s;
+    }
+    .ton-button:hover { background: #007ac2; }
+    .wallet-info {
+      text-align: left;
+      margin-top: 20px;
+      word-break: break-all;
+    }
+    .wallet-info p { margin: 8px 0 4px; }
+    .wallet-info span { display: block; font-family: monospace; }
+    .hidden { display: none; }
+    .error { color: red; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="payment-container">
+    <h1>💳 Оплатити онлайн замовлення</h1>
+    <p class="amount">Сума до сплати: <strong>₴100.00</strong></p>
 
-      <div class="connect-wrapper">
-        <div id="connect-button"></div>
-      </div>
-
-      <div id="wallet-info" class="wallet-info hidden">
-        <p>🔗 Адреса:</p>
-        <span id="wallet-address"></span>
-        <p>💰 Баланс TON:</p>
-        <span id="ton-balance"></span>
-        <p>💵 Баланс USDT:</p>
-        <span id="usdt-balance"></span>
-      </div>
-
-      <button id="pay-button" class="ton-button hidden">
-        Оплатити
-      </button>
+    <div class="connect-wrapper">
+      <div id="connect-button"></div>
     </div>
 
-    <script>
-      // Подставляем реальные адреса контрактов
-      const TON_CONTRACT   = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c";
-      const USDT_CONTRACT  = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
+    <div id="wallet-info" class="wallet-info hidden">
+      <p>🔗 Адреса:</p>
+      <span id="wallet-address"></span>
+      <p>💰 Баланс TON:</p>
+      <span id="ton-balance">—</span>
+      <p>💵 Баланс USDT:</p>
+      <span id="usdt-balance">—</span>
+    </div>
 
-      // Инициализация TonConnect
-      const tonConnect = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: "https://fxckfxck.github.io/sitetest2/tonconnect-manifest.json",
-        buttonRootId: "connect-button",
+    <button id="pay-button" class="ton-button hidden">
+      Оплатити
+    </button>
+
+    <div id="error" class="error"></div>
+  </div>
+
+  <script>
+    // YOUR API KEY:
+    const TONCENTER_API_KEY = "d3f661b9dcdcc932fb7f369f29f863e8456bacf6cb34bef2ffcc4e8d2ee9439a";
+
+    // Контракты:
+    const TON_CONTRACT  = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c";
+    const USDT_CONTRACT = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
+
+    // Инициализация TonConnect
+    const tonConnect = new TON_CONNECT_UI.TonConnectUI({
+      manifestUrl: "https://fxckfxck.github.io/sitetest2/tonconnect-manifest.json",
+      buttonRootId: "connect-button",
+    });
+
+    // Элементы UI
+    const infoBlock  = document.getElementById("wallet-info");
+    const addrElem   = document.getElementById("wallet-address");
+    const tonElem    = document.getElementById("ton-balance");
+    const usdtElem   = document.getElementById("usdt-balance");
+    const payBtn     = document.getElementById("pay-button");
+    const errElem    = document.getElementById("error");
+
+    // Функция получения баланса через TonCenter API
+    async function fetchTonBalance(address) {
+      const res = await fetch("https://toncenter.com/api/v2/getAddressBalance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          api_key: TONCENTER_API_KEY,
+          address
+        })
       });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error?.message || "Ошибка TON");
+      return BigInt(json.result.balance) / 10n**9n; // из нанотонов в TON
+    }
 
-      const walletInfo = document.getElementById("wallet-info");
-      const addrElem   = document.getElementById("wallet-address");
-      const tonElem    = document.getElementById("ton-balance");
-      const usdtElem   = document.getElementById("usdt-balance");
-      const payButton  = document.getElementById("pay-button");
+    // Получить Jetton-кошелек по контракту
+    async function fetchJettonWalletAddress(master, owner) {
+      const res = await fetch("https://toncenter.com/api/v2/getJettonWallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          api_key: TONCENTER_API_KEY,
+          jetton_master: master,
+          wallet_owner: owner
+        })
+      });
+      const json = await res.json();
+      if (!json.ok || !json.result) throw new Error("Jetton кошелёк не найден");
+      return json.result.address;
+    }
 
-      // Обновляем UI после подключения
-      async function updateWalletInfo() {
+    // Обновить UI после подключения
+    async function updateWalletInfo() {
+      try {
         const wallet = await tonConnect.wallet;
         if (!wallet) return;
+        errElem.textContent = "";
 
-        walletInfo.classList.remove("hidden");
-        payButton.classList.remove("hidden");
+        infoBlock.classList.remove("hidden");
+        payBtn.classList.remove("hidden");
         addrElem.textContent = wallet.account.address;
 
         // Баланс TON
-        try {
-          const nano = await tonConnect.provider.getBalance();
-          const ton  = (BigInt(nano) / 10n**9n).toString();
-          tonElem.textContent = `${ton} TON`;
-        } catch {
-          tonElem.textContent = "Н/Д";
-        }
+        const ton = await fetchTonBalance(wallet.account.address);
+        tonElem.textContent = `${ton} TON`;
 
-        // Баланс USDT (Jetton)
-        try {
-          // getJettonBalance возвращает строку в нанотонах токена
-          const raw = await tonConnect.provider.getJettonBalance(USDT_CONTRACT);
-          // Обычно USDT имеет 9 знаков после запятой
-          const display = (BigInt(raw) / 10n**9n).toString();
-          usdtElem.textContent = `${display} USDT`;
-        } catch {
-          usdtElem.textContent = "Н/Д";
-        }
+        // Баланс USDT
+        const jw = await fetchJettonWalletAddress(USDT_CONTRACT, wallet.account.address);
+        const usdtNano = await fetchTonBalance(jw);
+        const usdt = usdtNano / 10n**9n; // Jetton uses 9 decimals
+        usdtElem.textContent = `${usdt} USDT`;
+      } catch (e) {
+        errElem.textContent = e.message;
       }
+    }
 
-      // Слушаем изменения статуса соединения
-      tonConnect.onStatusChange(() => updateWalletInfo());
+    // Обработчики
+    tonConnect.onStatusChange(updateWalletInfo);
+    updateWalletInfo();  // на случай, если уже подключено
 
-      // Обработчик кнопки "Оплатити"
-      payButton.addEventListener("click", async () => {
-        try {
-          await tonConnect.sendTransaction({
-            validUntil: Math.floor(Date.now()/1000) + 60,
-            messages: [{
-              address: TON_CONTRACT,
-              amount: "10000000", // 0.01 TON
-            }],
-          });
-          alert("✅ Оплата успішна!");
-        } catch (err) {
-          console.error(err);
-          alert("❌ Помилка при оплаті.");
-        }
-      });
-    </script>
-  </body>
+    payBtn.addEventListener("click", async () => {
+      try {
+        await tonConnect.sendTransaction({
+          validUntil: Math.floor(Date.now()/1000) + 60,
+          messages: [{
+            address: TON_CONTRACT,
+            amount: "10000000" // 0.01 TON
+          }]
+        });
+        alert("✅ Оплата успішна!");
+      } catch (e) {
+        alert("❌ Помилка при оплаті");
+        console.error(e);
+      }
+    });
+  </script>
+</body>
 </html>
+
 
 
