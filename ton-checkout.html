@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>213Оплата через TON</title>
+    <title>Оплата через TON</title>
     <!-- TonConnect UI -->
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
@@ -44,7 +44,7 @@
       .ton-button:hover { background: #007ac2; }
       .wallet-info {
         text-align: left; margin-top: 20px;
-        word-break: break-all;
+        word-break: break-word;
       }
       .wallet-info p { margin: 8px 0 4px; }
       .wallet-info span { display: block; font-family: monospace; }
@@ -62,7 +62,7 @@
       </div>
 
       <div id="wallet-info" class="wallet-info hidden">
-        <p>🔗 Адресаааа:</p>
+        <p>🔗 Адреса:</p>
         <span id="wallet-address"></span>
         <p>💰 Баланс TON:</p>
         <span id="ton-balance">—</span>
@@ -78,20 +78,15 @@
     </div>
 
     <script>
-      // Ваш API-ключ TonCenter
       const API_KEY = "d3f661b9dcdcc932fb7f369f29f863e8456bacf6cb34bef2ffcc4e8d2ee9439a";
-
-      // Адреса нативного TON-получателя и Jetton-контракта USDT
       const TON_MASTER  = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c";
       const USDT_MASTER = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
 
-      // Инициализация TonConnect
       const tonConnect = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: "https://fxckfxck.github.io/sitetest2/tonconnect-manifest.json",
         buttonRootId: "connect-button",
       });
 
-      // Привязка UI-элементов
       const infoBlock = document.getElementById("wallet-info");
       const addrElem  = document.getElementById("wallet-address");
       const tonElem   = document.getElementById("ton-balance");
@@ -99,19 +94,13 @@
       const payBtn    = document.getElementById("pay-button");
       const errElem   = document.getElementById("error");
 
-      // Получить баланс TON через TonCenter V2
       async function fetchTonBalance(address) {
-        const res = await fetch("https://toncenter.com/api/v2/getAddressBalance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ api_key: API_KEY, address })
-        });
+        const res = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${address}&api_key=${API_KEY}`);
         const json = await res.json();
         if (!json.ok) throw new Error(json.error?.message || "getAddressBalance failed");
-        return BigInt(json.result.balance) / 10n**9n; // конверт в TON
+        return BigInt(json.result.balance) / 10n**9n;
       }
 
-      // Получить баланс Jetton через TonCenter V3
       async function fetchJettonBalance(address, jetton_master) {
         const res = await fetch("https://toncenter.com/api/v3/getAccountJettonBalance", {
           method: "POST",
@@ -123,9 +112,6 @@
         return { amount: BigInt(json.result.balance), decimals: json.result.decimals };
       }
 
-
-
-      // Обновление UI после подключения кошелька
       async function updateWalletInfo() {
         try {
           const wallet = await tonConnect.wallet;
@@ -135,14 +121,12 @@
           infoBlock.classList.remove("hidden");
           payBtn.classList.remove("hidden");
 
-          const userAddr = normalizeAddress(wallet.account.address);
+          const userAddr = wallet.account.address;
           addrElem.textContent = userAddr;
 
-          // Баланс TON
           const ton = await fetchTonBalance(userAddr);
           tonElem.textContent = `${ton.toString()} TON`;
 
-          // Баланс USDT
           const jet = await fetchJettonBalance(userAddr, USDT_MASTER);
           const usdt = jet.amount / (10n ** BigInt(jet.decimals));
           usdtElem.textContent = `${usdt.toString()} USDT`;
@@ -152,12 +136,9 @@
         }
       }
 
-      // Слушаем событие статуса для TonConnect
       tonConnect.onStatusChange(updateWalletInfo);
-      // Попытка сразу обновить, если уже подключено
       updateWalletInfo();
 
-      // Обработчик кнопки "Оплатити"
       payBtn.addEventListener("click", async () => {
         try {
           await tonConnect.sendTransaction({
@@ -173,6 +154,7 @@
     </script>
   </body>
 </html>
+
 
 
 
