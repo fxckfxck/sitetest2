@@ -2,11 +2,9 @@
 <html lang="uk">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>1011132Оплата через TON</title>
-    <!-- Підключення TonConnect UI -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Оплата через TON</title>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-    <!-- Підключення зовнішнього CSS -->
     <style>
       * {
         box-sizing: border-box;
@@ -85,50 +83,53 @@
         margin-top: 12px;
         font-weight: 600;
       }
-        /* Подправил стиль для более выразительного текста баланса и адреса */
+      /* Подправил стиль для более выразительного текста баланса и адреса */
       .wallet-info p {
         margin: 12px 0 6px;
         font-weight: 600;
-        font-size: 2.1em;
+        font-size: 1.5em;
       }
       .wallet-info span {
         font-family: monospace;
-        font-size: 2.2em;
+        font-size: 1.5em;
         color: #333;
         word-break: break-word;
       }
     </style>
-    
   </head>
   <body>
     <div class="payment-container">
-      <h1>💳 Оплатити онлайн замовлення</h1>
-      <p class="amount">Сума до сплати: <strong>₴100.00</strong></p>
+      <h1>Оплатити онлайн замовлення 💳</h1>
+      <p class="amount">Сума до сплати: <b id="order-summary"></b></p>
+      <p class="amount">
+        В токені TON: <b id="order-summary2">Завантаження…</b>
+      </p>
 
+      <p id="crypto-price">Загрузка...</p>
       <div class="connect-wrapper">
         <div id="connect-button"></div>
       </div>
 
       <div id="wallet-info" class="wallet-info hidden">
-        <p>🔗 Адреса hex/raw:</p>
-        <span id="wallet-address"></span>
+        <p>🔗 Ваша адреса гаманця hex/raw::</p>
+        <span id="wallet-address">—</span>
         <p>💰 Баланс TON:</p>
         <span id="ton-balance">—</span>
       </div>
 
-      <button id="pay-button" class="ton-button hidden">
-        Оплатити
-      </button>
+      <button id="pay-button" class="ton-button hidden">Оплатити</button>
 
       <div id="error" class="error"></div>
     </div>
 
     <script>
-      const API_KEY = "d3f661b9dcdcc932fb7f369f29f863e8456bacf6cb34bef2ffcc4e8d2ee9439a";
+      const API_KEY =
+        "d3f661b9dcdcc932fb7f369f29f863e8456bacf6cb34bef2ffcc4e8d2ee9439a";
       const PAY_ADDRESS = "UQDQneUBjm3B_SYkv9oxyssnVsqWxJ-fwWXvgzw19O7dtfTk";
 
       const tonConnect = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: "https://fxckfxck.github.io/sitetest2/tonconnect-manifest.json",
+        manifestUrl:
+          "https://fxckfxck.github.io/sitetest2/tonconnect-manifest.json",
         buttonRootId: "connect-button",
       });
 
@@ -139,15 +140,16 @@
       const errElem = document.getElementById("error");
 
       async function fetchTonBalance(address) {
-        const res = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${address}&api_key=${API_KEY}`);
+        const res = await fetch(
+          `https://toncenter.com/api/v2/getAddressBalance?address=${address}&api_key=${API_KEY}`
+        );
         const json = await res.json();
-        if (!json.ok) throw new Error(json.error?.message || "getAddressBalance failed");
+        if (!json.ok)
+          throw new Error(
+            json.error?.message || "Помилка отримання балансу TON"
+          );
         const balanceTon = Number(json.result) / 10 ** 9;
         return balanceTon.toFixed(3);
-      }
-
-      function textToBase64(text) {
-        return btoa(unescape(encodeURIComponent(text)));
       }
 
       async function updateWalletInfo() {
@@ -175,22 +177,73 @@
 
       payBtn.addEventListener("click", async () => {
         try {
+          // Беремо текст, наприклад "0.0312 TON"
+          const tonText = document.getElementById("order-summary2").textContent;
+          // Парсимо число з рядка (беремо частину перед пробілом)
+          const tonAmount = parseFloat(tonText.split(" ")[0]);
+          if (isNaN(tonAmount) || tonAmount <= 0) {
+            alert("Невірна сума для оплати");
+            return;
+          }
+
+          // Переводимо в нанотони (ціле число у рядку)
+          const amountNano = (tonAmount * 1e9).toFixed(0);
 
           await tonConnect.sendTransaction({
             validUntil: Math.floor(Date.now() / 1000) + 60,
             messages: [
               {
                 address: PAY_ADDRESS,
-                amount: "10000000", // 0.01 TON
+                amount: amountNano,
               },
             ],
           });
+
           alert("✅ Оплата успішна!");
         } catch (e) {
           alert("❌ Помилка при оплаті");
           console.error(e);
         }
       });
+
+      const totalPrice1 = sessionStorage.getItem("totalPrice");
+      const totalQuantity = sessionStorage.getItem("totalQuantity");
+
+      document.getElementById("order-summary").innerHTML = `
+      <strong></strong>₴${totalPrice1}
+    `;
+
+      async function fetchTonPrice() {
+        try {
+          const res = await fetch(
+            "https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd,uah&symbols=TON"
+          );
+          const data = await res.json();
+          const tonPriceUah = data.ton.uah;
+
+          document.getElementById(
+            "crypto-price"
+          ).textContent = `Курс TON ≈ ₴${tonPriceUah}`;
+
+          if (totalPrice1 && !isNaN(totalPrice1)) {
+            const tonAmount = (parseFloat(totalPrice1) / tonPriceUah).toFixed(
+              4
+            );
+            document.getElementById(
+              "order-summary2"
+            ).textContent = `${tonAmount} TON`;
+          } else {
+            document.getElementById("order-summary2").textContent =
+              "Помилка розрахунку";
+          }
+        } catch (e) {
+          document.getElementById("order-summary2").textContent =
+            "Помилка отримання курсу";
+          console.error(e);
+        }
+      }
+
+      fetchTonPrice();
     </script>
   </body>
 </html>
