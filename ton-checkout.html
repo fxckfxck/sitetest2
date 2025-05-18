@@ -98,8 +98,6 @@
 
       payBtn.addEventListener("click", async () => {
         try {
-          const comment = "Оплата замовлення #1234";
-          const payload = textToBase64(comment);
 
           await tonConnect.sendTransaction({
             validUntil: Math.floor(Date.now() / 1000) + 60,
@@ -107,7 +105,6 @@
               {
                 address: PAY_ADDRESS,
                 amount: "10000000", // 0.01 TON
-                payload: comment,
               },
             ],
           });
