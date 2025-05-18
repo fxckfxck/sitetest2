@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>1Оплата через TON</title>
+    <title>12Оплата через TON</title>
     <!-- Підключення TonConnect UI -->
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <!-- Підключення зовнішнього CSS -->
@@ -52,12 +52,16 @@
       const errElem   = document.getElementById("error");
 
   async function fetchTonBalance(address) {
+async function fetchTonBalance(address) {
   const res = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${address}&api_key=${API_KEY}`);
   const json = await res.json();
-  console.log("TON balance response:", json);
   if (!json.ok) throw new Error(json.error?.message || "getAddressBalance failed");
-  return BigInt(json.result) / 10n ** 9n;
+  
+  // Конвертируем в число TON (number), не BigInt
+  const balanceTon = Number(json.result) / 10**9;
+  return balanceTon;
 }
+
 
 
       async function fetchJettonBalance(address, jetton_master) {
