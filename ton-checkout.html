@@ -3,10 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>11132Оплата через TON</title>
-    <!-- Підключення TonConnect UI -->
+    <title>Оплата через TON</title>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-    <!-- Підключення зовнішнього CSS -->
     <link rel="stylesheet" href="css/stylesTonConnect.css" />
   </head>
   <body>
@@ -23,8 +21,6 @@
         <span id="wallet-address"></span>
         <p>💰 Баланс TON:</p>
         <span id="ton-balance">—</span>
-        <p>💵 Баланс USDT:</p>
-        <span id="usdt-balance">—</span>
       </div>
 
       <button id="pay-button" class="ton-button hidden">
@@ -36,8 +32,8 @@
 
     <script>
       const API_KEY = "d3f661b9dcdcc932fb7f369f29f863e8456bacf6cb34bef2ffcc4e8d2ee9439a";
-      const TON_MASTER  = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c";
-      const USDT_MASTER = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
+      const TON_MASTER = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c";
+      const PAY_ADDRESS = "UQDQneUBjm3B_SYkv9oxyssnVsqWxJ-fwWXvgzw19O7dtfTk";
 
       const tonConnect = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: "https://fxckfxck.github.io/sitetest2/tonconnect-manifest.json",
@@ -45,34 +41,17 @@
       });
 
       const infoBlock = document.getElementById("wallet-info");
-      const addrElem  = document.getElementById("wallet-address");
-      const tonElem   = document.getElementById("ton-balance");
-      const usdtElem  = document.getElementById("usdt-balance");
-      const payBtn    = document.getElementById("pay-button");
-      const errElem   = document.getElementById("error");
+      const addrElem = document.getElementById("wallet-address");
+      const tonElem = document.getElementById("ton-balance");
+      const payBtn = document.getElementById("pay-button");
+      const errElem = document.getElementById("error");
 
-
-async function fetchTonBalance(address) {
-  const res = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${address}&api_key=${API_KEY}`);
-  const json = await res.json();
-  if (!json.ok) throw new Error(json.error?.message || "getAddressBalance failed");
-  
-  // Конвертируем в число TON (number), не BigInt
-  const balanceTon = Number(json.result) / 10**9;
-  return balanceTon.toFixed(3);
-}
-
-
-
-      async function fetchJettonBalance(address, jetton_master) {
-        const res = await fetch("https://toncenter.com/api/v3/getAccountJettonBalance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ api_key: API_KEY, address, jetton_master })
-        });
+      async function fetchTonBalance(address) {
+        const res = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${address}&api_key=${API_KEY}`);
         const json = await res.json();
-        if (!json.ok) throw new Error(json.error?.message || "getAccountJettonBalance failed");
-        return { amount: BigInt(json.result.balance), decimals: json.result.decimals };
+        if (!json.ok) throw new Error(json.error?.message || "getAddressBalance failed");
+        const balanceTon = Number(json.result) / 10 ** 9;
+        return balanceTon.toFixed(3);
       }
 
       async function updateWalletInfo() {
@@ -88,11 +67,7 @@ async function fetchTonBalance(address) {
           addrElem.textContent = userAddr;
 
           const ton = await fetchTonBalance(userAddr);
-          tonElem.textContent = `${ton.toString()} TON`;
-
-          const jet = await fetchJettonBalance(userAddr, USDT_MASTER);
-          const usdt = jet.amount / (10n ** BigInt(jet.decimals));
-          usdtElem.textContent = `${usdt.toString()} USDT`;
+          tonElem.textContent = `${ton} TON`;
         } catch (e) {
           errElem.textContent = e.message;
           console.error(e);
@@ -104,10 +79,17 @@ async function fetchTonBalance(address) {
 
       payBtn.addEventListener("click", async () => {
         try {
-          await tonConnect.sendTransaction({
+          const transaction = {
             validUntil: Math.floor(Date.now() / 1000) + 60,
-            messages: [{ address: TON_MASTER, amount: "10000000" }] // 0.01 TON
-          });
+            messages: [
+              {
+                address: PAY_ADDRESS,
+                amount: "10000000", // 0.01 TON в нанотонах
+              },
+            ],
+          };
+
+          await tonConnect.sendTransaction(transaction);
           alert("✅ Оплата успішна!");
         } catch (e) {
           alert("❌ Помилка при оплаті");
