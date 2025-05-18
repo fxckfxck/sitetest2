@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>2Оплата через TON</title>
+    <title>23Оплата через TON</title>
     <!-- TonConnect UI -->
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
@@ -123,10 +123,7 @@
         return { amount: BigInt(json.result.balance), decimals: json.result.decimals };
       }
 
-      // Стрип префикса 0: если есть
-      function normalizeAddress(raw) {
-        return raw.includes(":") ? raw.split(":")[1] : raw;
-      }
+
 
       // Обновление UI после подключения кошелька
       async function updateWalletInfo() {
