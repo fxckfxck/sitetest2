@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>1Оплата через TON</title>
+  <title>Оплата через TON</title>
+
   <!-- TonConnect UI -->
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+
   <style>
     * { box-sizing: border-box; }
     body {
@@ -25,39 +27,25 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       text-align: center;
     }
-    h1 { margin: 0 0 16px; }
-    .amount {
-      font-size: 1.2em;
-      margin-bottom: 20px;
-    }
-    .connect-wrapper {
-      display: flex;
-      justify-content: center;
-      margin: 20px 0;
-    }
-    /* Встроенная кнопка TonConnect */
+    h1 { margin-bottom: 16px; }
+    .amount { font-size: 1.2em; margin-bottom: 20px; }
+    .connect-wrapper { display: flex; justify-content: center; margin: 20px 0; }
     #connect-button .ton-connect-button {
-      width: 100%;
-      max-width: 280px;
+      width: 100%; max-width: 280px;
     }
     .ton-button {
       display: block;
-      width: 100%;
-      max-width: 280px;
+      width: 100%; max-width: 280px;
       margin: 12px auto;
       padding: 12px;
-      font-size: 1em;
-      color: #fff;
-      background: #0098ea;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
+      font-size: 1em; color: #fff;
+      background: #0098ea; border: none;
+      border-radius: 8px; cursor: pointer;
       transition: background .3s;
     }
     .ton-button:hover { background: #007ac2; }
     .wallet-info {
-      text-align: left;
-      margin-top: 20px;
+      text-align: left; margin-top: 20px;
       word-break: break-all;
     }
     .wallet-info p { margin: 8px 0 4px; }
@@ -84,20 +72,17 @@
       <span id="usdt-balance">—</span>
     </div>
 
-    <button id="pay-button" class="ton-button hidden">
-      Оплатити
-    </button>
-
+    <button id="pay-button" class="ton-button hidden">Оплатити</button>
     <div id="error" class="error"></div>
   </div>
 
   <script>
-    // YOUR API KEY:
-    const TONCENTER_API_KEY = "d3f661b9dcdcc932fb7f369f29f863e8456bacf6cb34bef2ffcc4e8d2ee9439a";
+    // Ваш API-ключ TonCenter
+    const API_KEY = "d3f661b9dcdcc932fb7f369f29f863e8456bacf6cb34bef2ffcc4e8d2ee9439a";
 
-    // Контракты:
-    const TON_CONTRACT  = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c";
-    const USDT_CONTRACT = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
+    // Контракты
+    const TON_MASTER  = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c";
+    const USDT_MASTER = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
 
     // Инициализация TonConnect
     const tonConnect = new TON_CONNECT_UI.TonConnectUI({
@@ -105,46 +90,47 @@
       buttonRootId: "connect-button",
     });
 
-    // Элементы UI
-    const infoBlock  = document.getElementById("wallet-info");
-    const addrElem   = document.getElementById("wallet-address");
-    const tonElem    = document.getElementById("ton-balance");
-    const usdtElem   = document.getElementById("usdt-balance");
-    const payBtn     = document.getElementById("pay-button");
-    const errElem    = document.getElementById("error");
+    // Элементы страницы
+    const infoBlock = document.getElementById("wallet-info");
+    const addrElem  = document.getElementById("wallet-address");
+    const tonElem   = document.getElementById("ton-balance");
+    const usdtElem  = document.getElementById("usdt-balance");
+    const payBtn    = document.getElementById("pay-button");
+    const errElem   = document.getElementById("error");
 
-    // Функция получения баланса через TonCenter API
+    // 1) Получить баланс TON через v2-эндпоинт
     async function fetchTonBalance(address) {
       const res = await fetch("https://toncenter.com/api/v2/getAddressBalance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          api_key: TONCENTER_API_KEY,
-          address
-        })
+        body: JSON.stringify({ api_key: API_KEY, address })
       });
       const json = await res.json();
-      if (!json.ok) throw new Error(json.error?.message || "Ошибка TON");
-      return BigInt(json.result.balance) / 10n**9n; // из нанотонов в TON
+      if (!json.ok) throw new Error(json.error?.message || "getAddressBalance failed");  // :contentReference[oaicite:0]{index=0}
+      return BigInt(json.result.balance) / 10n**9n;
     }
 
-    // Получить Jetton-кошелек по контракту
-    async function fetchJettonWalletAddress(master, owner) {
-      const res = await fetch("https://toncenter.com/api/v2/getJettonWallet", {
+    // 2) Получить баланс Jetton через v3-эндпоинт getAccountJettonBalance
+    async function fetchJettonBalance(address, jetton_master) {
+      const res = await fetch("https://toncenter.com/api/v3/getAccountJettonBalance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          api_key: TONCENTER_API_KEY,
-          jetton_master: master,
-          wallet_owner: owner
+          api_key: API_KEY,
+          address,
+          jetton_master
         })
       });
       const json = await res.json();
-      if (!json.ok || !json.result) throw new Error("Jetton кошелёк не найден");
-      return json.result.address;
+      if (!json.ok) throw new Error(json.error?.message || "getAccountJettonBalance failed");
+      // возвращается объект { balance: string, decimals: number }
+      return {
+        amount: BigInt(json.result.balance),
+        decimals: json.result.decimals
+      };  // :contentReference[oaicite:1]{index=1}
     }
 
-    // Обновить UI после подключения
+    // Обновление UI после соединения
     async function updateWalletInfo() {
       try {
         const wallet = await tonConnect.wallet;
@@ -155,32 +141,30 @@
         payBtn.classList.remove("hidden");
         addrElem.textContent = wallet.account.address;
 
-        // Баланс TON
+        // TON
         const ton = await fetchTonBalance(wallet.account.address);
-        tonElem.textContent = `${ton} TON`;
+        tonElem.textContent = `${ton.toString()} TON`;
 
-        // Баланс USDT
-        const jw = await fetchJettonWalletAddress(USDT_CONTRACT, wallet.account.address);
-        const usdtNano = await fetchTonBalance(jw);
-        const usdt = usdtNano / 10n**9n; // Jetton uses 9 decimals
-        usdtElem.textContent = `${usdt} USDT`;
+        // USDT
+        const jetton = await fetchJettonBalance(wallet.account.address, USDT_MASTER);
+        const usdt = jetton.amount / (10n ** BigInt(jetton.decimals));
+        usdtElem.textContent = `${usdt.toString()} USDT`;
       } catch (e) {
         errElem.textContent = e.message;
+        console.error(e);
       }
     }
 
-    // Обработчики
+    // Слушаем статус TonConnect
     tonConnect.onStatusChange(updateWalletInfo);
     updateWalletInfo();  // на случай, если уже подключено
 
+    // Кнопка оплаты
     payBtn.addEventListener("click", async () => {
       try {
         await tonConnect.sendTransaction({
           validUntil: Math.floor(Date.now()/1000) + 60,
-          messages: [{
-            address: TON_CONTRACT,
-            amount: "10000000" // 0.01 TON
-          }]
+          messages: [{ address: TON_MASTER, amount: "10000000" }]
         });
         alert("✅ Оплата успішна!");
       } catch (e) {
@@ -191,6 +175,7 @@
   </script>
 </body>
 </html>
+
 
 
 
